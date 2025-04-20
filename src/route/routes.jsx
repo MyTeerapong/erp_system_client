@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Dashboard from '../pages/dashboard/index.jsx';
 import Layout from '../components/layout.jsx';
-import Type from '../pages/type/type.jsx';
+import Type from '../pages/type/index.jsx';
 import Product from '../pages/product/product.jsx';
 import Employee from '../pages/employee/employee.jsx';
 import Department from '../pages/department/department.jsx';
