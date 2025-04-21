@@ -23,9 +23,10 @@ const items = [
   getItem('หน้าหลัก', 'dashboard', <PieChartOutlined />),
   getItem('บันทึกข้อมูลหลัก', 'sub1', <UserOutlined />, [
     getItem('ประเภทสินค้า', 'type'),
+    getItem('หน่วยสินค้า', 'unit'),
     getItem('สินค้า', 'product'),
-    getItem('พนักงาน', 'employee'),
     getItem('แผนก', 'department'),
+    getItem('พนักงาน', 'employee'),
   ]),
   getItem('ผลิตสินค้า', 'sub2', <TeamOutlined />, [
     getItem('การผลิต', 'production'),
