@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Divider, Table, Button, Input, Space } from 'antd';
-import { getTypes, deleteType, updateType, insertType } from '../../services/TypeService';
+import { getProducts, insertProduct, updateProduct, deleteProduct} from '../../services/ProductService';
+import { getTypes } from '../../services/TypeService';
+import { getUnit } from '../../services/UnitService';
+
 import Swal from 'sweetalert2';
-import TypeModalForm from './component/modal';
+import ProductModalForm from './component/modal';
 import { SearchOutlined, PlusOutlined, EditFilled, DeleteFilled } from '@ant-design/icons';
 
 const { Search } = Input;
@@ -13,15 +16,35 @@ const App = () => {
   const [searchId, setSearchId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
-
+  const [loading, setLoading] = useState(false);
+  const [types, setTypes] = useState([]);
+  const [units, setUnits] = useState([]);
+  
   const fetchData = async () => {
     try {
-      const result = await getTypes();
+      setLoading(true);
+      const result = await getProducts();
       setData(result);
+      const type = await getTypes();
+      setTypes(type);
+      const unit = await getUnit();
+      setUnits(unit);
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const getTypeName = (typename => {
+    const type = types.find(item => item.type_id === typename);
+    return type ? type.type_name : '-';
+  });
+
+  const getUnitName = (unitname => {
+    const unit = units.find(item => item.unit_id === unitname);
+    return unit ? unit.unit_name : '-';
+  });
 
   useEffect(() => {
     fetchData();
@@ -43,15 +66,16 @@ const App = () => {
 
   const handleSubmitForm = async (values) => {
     try {
+      const dataToUpdate = {
+        ...values,
+        product_id: editingData.product_id, 
+        product_price: parseFloat(values.product_price),
+      };
       if (editingData) {
-        const dataToUpdate = {
-          ...values,
-          type_id: editingData.type_id, 
-        };
-        await updateType(dataToUpdate);
+        await updateProduct(dataToUpdate);
         Swal.fire('อัปเดตสำเร็จ', '', 'success');
       } else {
-        await insertType(values);
+        await insertProduct(values);
         Swal.fire('เพิ่มข้อมูลสำเร็จ', '', 'success');
       }
       fetchData();
@@ -63,10 +87,10 @@ const App = () => {
   };
   
 
-  const handleDelete = async (typeId) => {
+  const handleDelete = async (product_id) => {
     Swal.fire({
       title: 'คุณแน่ใจไหม?',
-      text: `ข้อมูล ${typeId} จะถูกลบออก`,
+      text: `ข้อมูล ${product_id} จะถูกลบออก`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'ตกลง',
@@ -74,8 +98,8 @@ const App = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await deleteType(typeId);
-          Swal.fire('ลบสำเร็จ!', `ลบข้อมูล ID: ${typeId} แล้ว`, 'success');
+          await deleteProduct(product_id);
+          Swal.fire('ลบสำเร็จ!', `ลบข้อมูล ID: ${product_id} แล้ว`, 'success');
           fetchData();
         } catch {
           Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถลบข้อมูลได้', 'error');
@@ -87,13 +111,30 @@ const App = () => {
   const columns = [
     {
       title: <div style={{ textAlign: 'center' }}>รหัสสินค้า</div>,
-      dataIndex: 'type_id',
+      dataIndex: 'product_id',
       align: 'center',
     },
     {
       title: <div style={{ textAlign: 'center' }}>ชื่อสินค้า</div>,
-      dataIndex: 'type_name',
+      dataIndex: 'product_name',
       align: 'left',
+    },
+    {
+      title: <div style={{ textAlign: 'center' }}>ราคา</div>,
+      dataIndex: 'product_price',
+      align: 'left',
+    },
+    {
+      title: <div style={{ textAlign: 'center' }}>ประเภท</div>,
+      dataIndex: 'type_id',
+      align: 'left',
+      render: (typename) => getTypeName(typename),
+    },
+    {
+      title: <div style={{ textAlign: 'center' }}>หน่วยนับ</div>,
+      dataIndex: 'unit_id',
+      align: 'left',
+      render: (unitname) => getUnitName(unitname),
     },
     {
       title: <div style={{ textAlign: 'center' }}></div>,
@@ -114,7 +155,7 @@ const App = () => {
             type="primary"
             danger
             size="small"
-            onClick={() => handleDelete(record.type_id)}
+            onClick={() => handleDelete(record.product_id)}
             style={{ width: '80px', height: '32px' }}
           >
             <DeleteFilled /> ลบ
@@ -125,8 +166,8 @@ const App = () => {
   ];
 
   const filteredData = data.filter(item =>
-    item.type_name.toLowerCase().includes(searchName.toLowerCase()) &&
-    item.type_id.toLowerCase().includes(searchId.toLowerCase())
+    item.product_name.toLowerCase().includes(searchName.toLowerCase()) &&
+    item.product_id.toLowerCase().includes(searchId.toLowerCase())
   );
 
   return (
@@ -168,12 +209,13 @@ const App = () => {
         columns={columns}
         dataSource={filteredData}
         size="small"
-        rowKey="type_id"
+        rowKey="product_id"
         bordered
+        loading={loading}
         style={{ border: '1px solid #d9d9d9', borderRadius: '8px' }}
       />
 
-      <TypeModalForm
+      <ProductModalForm
         open={isModalOpen}
         onCancel={closeModal}
         onSubmit={handleSubmitForm}

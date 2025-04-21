@@ -13,14 +13,18 @@ const App = () => {
   const [searchId, setSearchId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
+  const [loading, setLoading] = useState(false); 
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const result = await getTypes();
       setData(result);
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
-    }
+    } finally {
+      setLoading(false);
+      }
   };
 
   useEffect(() => {
@@ -170,6 +174,7 @@ const App = () => {
         size="small"
         rowKey="type_id"
         bordered
+        loading={loading}
         style={{ border: '1px solid #d9d9d9', borderRadius: '8px' }}
       />
 
